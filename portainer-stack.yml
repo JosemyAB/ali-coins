@@ -1,0 +1,41 @@
+# Portainer Stack for the GHCR image. Prepare /opt/ali-coins on the Debian host first.
+# This starts immediately, then runs again 24 hours after each attempt finishes.
+services:
+  ali-coins:
+    image: ghcr.io/josemyab/ali-coins:2.5.1
+    container_name: ali-coins
+    init: true
+    restart: unless-stopped
+    environment:
+      APP_LANGUAGE: en
+      HEADLESS: 'true'
+      MANUAL_LOGIN: never
+      NOTIFY_HOST_LABEL: debian-server
+      TZ: Europe/Madrid
+    command:
+      - /bin/sh
+      - -c
+      - |
+        while :; do
+          node all.js
+          status=$?
+          echo "ali-coins run exited with status $$status; next run in 24 hours"
+          sleep 86400
+        done
+    volumes:
+      - /opt/ali-coins/credentials.env:/app/credentials.env:ro
+      - /opt/ali-coins/session.json.enc:/app/session.json.enc
+      - /opt/ali-coins/session_meta.json:/app/session_meta.json
+      - /opt/ali-coins/scratch:/app/scratch
+      # Optional multi-account configuration (create and protect this file on the host):
+      # - /opt/ali-coins/accounts.json:/app/accounts.json:ro
+    shm_size: 256m
+    tmpfs:
+      - /tmp:rw,nosuid,nodev,noexec,size=256m
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 768m
+    memswap_limit: 1536m
+    pids_limit: 256

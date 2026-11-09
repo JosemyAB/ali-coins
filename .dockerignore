@@ -80,4 +80,5 @@ eslint.config.js
 
 # Compose de referência (não precisa entrar na imagem)
 docker-compose*.yml
+portainer-stack.yml
 compose*.yml

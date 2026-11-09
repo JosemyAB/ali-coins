@@ -449,6 +449,21 @@ docker run --rm \
   ali-coins
 ```
 
+### Portainer and GitHub Container Registry
+
+[`portainer-stack.yml`](../portainer-stack.yml) is a Portainer Stack example that pulls
+`ghcr.io/josemyab/ali-coins`. The image workflow at
+`.github/workflows/publish-image.yml` builds `linux/amd64` and `linux/arm64` images on
+version-tag pushes (`vX.Y.Z`), and can also be run manually from the fork's `main` branch.
+It publishes the version in `package.json` and `latest`; the publish job is restricted to
+the `JosemyAB/ali-coins` fork and uses the scoped `GITHUB_TOKEN` with `packages: write`.
+No AliExpress credentials are used by the workflow or included in the build context.
+
+For a private GHCR package, configure its visibility and grant the fork's Actions workflow
+access in the package settings. Portainer also needs registry credentials to pull a private
+package. A public package can be pulled anonymously. Since the fork is public, check the
+package visibility after its first publication; linked packages can inherit repository access.
+
 - **Hosts with 1 GB of RAM (Oracle Free Tier, t2/t3.micro, DO):** recommend 1–2 GB of swap on the host (`fallocate -l 2G /swapfile`) and limit the container: `--init --pids-limit=256 --shm-size=256m --memory=768m --memory-swap=1536m`. Chromium's low-consumption flags are already applied by default both in Docker and outside it (`CHROMIUM_LOW_MEMORY=true`), `NODE_OPTIONS="--max-old-space-size=256"` prevents heap spikes, `NODE_COMPILE_CACHE` speeds up startup (V8 bytecode cache in `/tmp`), and `SCRYPT_N=32768` reduces the scrypt peak from ~134 MB to ~33 MB. Details in [`CLOUD_SESSIONS.en.md`](CLOUD_SESSIONS.en.md) and in the OS-specific manuals ([`INSTALL_LINUX.en.md`](INSTALL_LINUX.en.md), [`INSTALL_WINDOWS.en.md`](INSTALL_WINDOWS.en.md), [`INSTALL_MACOS.en.md`](INSTALL_MACOS.en.md)).
 - **Node Heap/OOM in the unified flow (outside Docker):** the `run*.sh` scripts detect the host RAM: 256 MB on small machines, 384 MB (3–6 GB), or 512 MB (above 6 GB). This avoids the `JavaScript heap out of memory` error from check-in + tasks in a single process. To force a ceiling, use `ALI_HEAP_MB=512 ./run_all.sh`; an exported `NODE_OPTIONS` takes precedence. Inside the container the ceiling remains 256 MB because of the `memory: 768M` limit; if you run the unified flow in a container with more tasks, increase `NODE_OPTIONS` and the memory limit together.
 - **Non-root user:** The container runs by default as the dedicated system user `appuser` (UID/GID 10001).
