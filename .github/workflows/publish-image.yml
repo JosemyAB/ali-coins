@@ -3,6 +3,7 @@ name: Build and publish Docker image
 on:
   pull_request:
     branches: [main]
+    types: [opened, synchronize, reopened, closed]
   push:
     tags:
       - 'v*.*.*'
@@ -13,7 +14,7 @@ permissions:
 
 jobs:
   validate:
-    if: github.event_name == 'pull_request'
+    if: github.event_name == 'pull_request' && github.event.action != 'closed'
     runs-on: ubuntu-latest
     steps:
       - name: Check out source
@@ -38,7 +39,11 @@ jobs:
     if: >-
       github.repository == 'JosemyAB/ali-coins' &&
       (startsWith(github.ref, 'refs/tags/v') ||
-       (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'))
+       (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main') ||
+       (github.event_name == 'pull_request' &&
+        github.event.action == 'closed' &&
+        github.event.pull_request.merged == true &&
+        github.event.pull_request.base.ref == 'main'))
     runs-on: ubuntu-latest
     permissions:
       contents: read
