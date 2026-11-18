@@ -33,6 +33,7 @@
     "format:check": "prettier --check .",
     "bench": "node scripts/benchmark.js",
     "notify:test": "node -e \"require('./libs/notify').test()\"",
+    "import:chrome": "node import_chrome_session.js",
     "prepare": "husky"
   },
   "lint-staged": {

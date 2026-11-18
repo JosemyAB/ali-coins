@@ -295,6 +295,29 @@ cleared only when the session is saved successfully.
 > 💡 On a VPS/cloud host without a graphical interface, perform the manual login on your local
 > computer and transfer the session with `export_session.js` / `import_session.js` (see the cloud section below).
 
+### Reusing an existing Google Chrome session (macOS)
+
+If you are already logged in to AliExpress in Chrome, you do not need to log in again
+(or face the anti-bot challenge). The bot **does not read Chrome's profile**: use the
+importer to copy the authenticated cookies into `session.json.enc`:
+
+```bash
+node import_chrome_session.js --dry-run   # inspect only, writes nothing
+node import_chrome_session.js             # import and encrypt the session
+npm start -- --check-session              # validate the session
+./run_all.sh                              # normal run
+```
+
+- Reads the Chrome profile cookie database and decrypts it with the `Chrome Safe Storage`
+  Keychain key. macOS may ask for permission on the first run; choose **Always Allow**
+  to avoid the prompt next time.
+- Auto-detects the logged-in profile. Use `--profile="Profile 1"` to pick another
+  profile and `--account=2` for secondary accounts in `credentials.env`.
+- The imported session is normalized to English (`en_US`) because the bot parsers
+  understand PT/EN. Your Chrome language is **not** changed.
+- Nothing is sent over the network. If Chrome has no AliExpress cookies, use
+  `./run_all.sh --manual-login`.
+
 ---
 
 ## Tests and Code Quality
