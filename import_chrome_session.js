@@ -39,6 +39,8 @@ if (fs.existsSync(credentialsEnvPath)) {
 
 const PROJECT_ROOT = __dirname;
 const CHROME_DIR = path.join(os.homedir(), 'Library', 'Application Support', 'Google', 'Chrome');
+const SECURITY_BIN = '/usr/bin/security';
+const SQLITE3_BIN = '/usr/bin/sqlite3';
 const KEYCHAIN_SERVICE = 'Chrome Safe Storage';
 const KEYCHAIN_ACCOUNT = 'Chrome';
 // Chrome >= 130 prefixes the plaintext value with SHA-256(host_key) (32 bytes)
@@ -60,25 +62,24 @@ class ChromeImportError extends Error {
   }
 }
 
-function commandExists(cmd) {
-  try {
-    execFileSync('which', [cmd], { stdio: 'ignore' });
-    return true;
-  } catch {
-    return false;
+function assertSystemBinary(binPath, label) {
+  if (!fs.existsSync(binPath)) {
+    throw new ChromeImportError(`${label} não encontrado em ${binPath}.`);
   }
 }
 
 /**
  * Reads the password used by Chrome (macOS) to encrypt cookies.
- * The first read may open the Keychain dialog; "Always Allow" avoids further
- * prompts on subsequent runs.
+ * The first read may open the Keychain dialog; choose "Allow" (the import is
+ * infrequent). Avoid "Always Allow" unless you accept granting the generic
+ * `/usr/bin/security` tool permanent access to Chrome's cookie key.
  * @returns {string}
  */
 function getChromeSafeStoragePassword() {
+  assertSystemBinary(SECURITY_BIN, 'Binário "security"');
   try {
     return execFileSync(
-      'security',
+      SECURITY_BIN,
       ['find-generic-password', '-w', '-s', KEYCHAIN_SERVICE, '-a', KEYCHAIN_ACCOUNT],
       { encoding: 'utf8' }
     ).trim();
@@ -149,8 +150,12 @@ function withCookiesDbCopy(cookiesDbPath, fn) {
   const tmpDb = path.join(tmpDir, 'Cookies');
   try {
     fs.copyFileSync(cookiesDbPath, tmpDb);
+    fs.chmodSync(tmpDb, 0o600);
     const journal = `${cookiesDbPath}-journal`;
-    if (fs.existsSync(journal)) fs.copyFileSync(journal, `${tmpDb}-journal`);
+    if (fs.existsSync(journal)) {
+      fs.copyFileSync(journal, `${tmpDb}-journal`);
+      fs.chmodSync(`${tmpDb}-journal`, 0o600);
+    }
     return fn(tmpDb);
   } finally {
     fs.rmSync(tmpDir, { recursive: true, force: true });
@@ -164,7 +169,7 @@ function readAliExpressCookieRows(cookiesDbPath) {
     `FROM cookies WHERE (${ALIEXPRESS_HOST_SQL}) ORDER BY last_access_utc DESC`;
   let raw;
   try {
-    raw = execFileSync('sqlite3', ['-json', cookiesDbPath, sql], {
+    raw = execFileSync(SQLITE3_BIN, ['-json', cookiesDbPath, sql], {
       encoding: 'utf8',
       maxBuffer: 32 * 1024 * 1024
     });
@@ -355,9 +360,7 @@ async function importChromeSession(options = {}) {
         'Em outros sistemas use ./run_all.sh --manual-login uma vez e depois export_session.js/import_session.js.'
     );
   }
-  if (!commandExists('sqlite3')) {
-    throw new ChromeImportError('O binário "sqlite3" não foi encontrado no PATH.');
-  }
+  assertSystemBinary(SQLITE3_BIN, 'Binário "sqlite3"');
 
   const account = resolveTargetAccount();
   const password = getChromeSafeStoragePassword();

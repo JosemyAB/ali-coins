@@ -309,14 +309,16 @@ npm start -- --check-session              # validate the session
 ```
 
 - Reads the Chrome profile cookie database and decrypts it with the `Chrome Safe Storage`
-  Keychain key. macOS may ask for permission on the first run; choose **Always Allow**
-  to avoid the prompt next time.
+  Keychain key. macOS may ask for permission on the first run; choose **Allow** (the
+  import is infrequent). Avoid **Always Allow**, which grants the generic `security`
+  tool permanent access to Chrome's cookie key.
+- The key can decrypt cookies for every site, but the importer only queries
+  `aliexpress.com` rows; nothing is sent over the network.
 - Auto-detects the logged-in profile. Use `--profile="Profile 1"` to pick another
   profile and `--account=2` for secondary accounts in `credentials.env`.
 - The imported session is normalized to English (`en_US`) because the bot parsers
   understand PT/EN. Your Chrome language is **not** changed.
-- Nothing is sent over the network. If Chrome has no AliExpress cookies, use
-  `./run_all.sh --manual-login`.
+- If Chrome has no AliExpress cookies, use `./run_all.sh --manual-login`.
 
 ---
 
