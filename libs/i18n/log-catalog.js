@@ -13,6 +13,13 @@ module.exports = {
       '[Invalid Session] The read-only check failed.',
     'Conta não encontrada para --check-session.': 'Account not found for --check-session.',
     'Sessão válida (somente leitura).': 'Valid session (read-only).',
+    'Perfil do Chrome sem banco de cookies; ignorando.':
+      'Chrome profile has no cookie database; ignoring.',
+    'Cookies AliExpress encontrados no Chrome.': 'AliExpress cookies found in Chrome.',
+    '[dry-run] Nenhum arquivo foi gravado.': '[dry-run] No file was written.',
+    'Sessão do Chrome importada com sucesso. Rode "npm start -- --check-session" para validar.':
+      'Chrome session imported successfully. Run "npm start -- --check-session" to validate.',
+    'Falha ao importar a sessão do Chrome.': 'Failed to import the Chrome session.',
     '\n---------------------------------------------------------------':
       '\n---------------------------------------------------------------',
     '\n================ RESUMO DAS TAREFAS ================':
